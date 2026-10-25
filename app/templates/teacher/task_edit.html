@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+{% block title %}{{ "Редактирование" if task else "Новая" }} задачи{% endblock %}
+{% block content %}
+<h1>{{ "Редактирование" if task else "Новая" }} задачи</h1>
+
+{% if error %}
+  <p style="background:#fee;color:#900;padding:10px;border-radius:6px;">{{ error }}</p>
+{% endif %}
+
+<form method="post" action="{{ form_action }}" class="card">
+  {{ csrf_input(request) }}
+  <label>Номер
+    <input name="external_number" type="number" required
+           value="{{ form.external_number if form else (task.external_number if task else '') }}">
+  </label>
+  <label>Название
+    <input name="title" required
+           value="{{ form.title if form else (task.title if task else '') }}">
+  </label>
+  <label>Условие
+    <textarea name="description" rows="10">{{ form.description if form else (task.description if task else '') }}</textarea>
+  </label>
+  <label>Режим сравнения
+    <select name="compare_mode">
+      {% set cm = (form.compare_mode if form else (task.compare_mode if task else "exact")) %}
+      <option value="exact" {{ "selected" if cm == "exact" }}>exact</option>
+      <option value="tokens" {{ "selected" if cm == "tokens" }}>tokens</option>
+      <option value="ignore_whitespace" {{ "selected" if cm == "ignore_whitespace" }}>ignore_whitespace</option>
+      <option value="float" {{ "selected" if cm == "float" }}>float</option>
+    </select>
+  </label>
+  <label>
+    <input type="checkbox" name="requires_file_input" value="1"
+           {{ "checked" if (form and form.requires_file_input) or (task and task.requires_file_input) }}>
+    Задача использует open()
+  </label>
+  <label>Имя файла для open() (например, input.txt)
+    <input name="input_filename"
+           value="{{ form.input_filename if form else (task.input_filename if task else '') }}">
+  </label>
+  <button>Сохранить</button>
+</form>
+
+{% if task %}
+<hr style="margin:24px 0;">
+
+<!-- =============== ПРИМЕРЫ =============== -->
+<h2 id="examples">Примеры (input / output)</h2>
+<form method="post" action="/admin/tasks/{{ task.id }}/examples" class="card">
+  {{ csrf_input(request) }}
+  <div id="examples-list">
+    {% for ex in examples %}
+    <div class="example-row"
+         style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-bottom:8px;">
+      <textarea name="ex_input" rows="3" placeholder="Ввод">{{ ex.input }}</textarea>
+      <textarea name="ex_output" rows="3" placeholder="Вывод">{{ ex.output }}</textarea>
+      <button type="button" class="link"
+              onclick="this.parentNode.remove();">✕</button>
+    </div>
+    {% endfor %}
+  </div>
+  <button type="button" onclick="addExampleRow()">+ Добавить пример</button>
+  <button type="submit" style="margin-left:8px;">Сохранить примеры</button>
+</form>
+
+<hr style="margin:24px 0;">
+
+{% if task.requires_file_input %}
+<!-- =============== ТЕСТЫ (open) =============== -->
+<h2 id="open-tests">Тесты (файл → вывод)</h2>
+<p class="muted">
+  Для этой задачи ученик читает данные из файла
+  <code>{{ task.input_filename or "input.txt" }}</code>.
+  Всего тестов: <b>{{ tests|length }}</b>.
+</p>
+
+<form method="post" action="/admin/tasks/{{ task.id }}/tests/open/add"
+      enctype="multipart/form-data" class="card">
+  {{ csrf_input(request) }}
+  <h4>Добавить тест</h4>
+  <label>Файл для open() (<code>{{ task.input_filename or "input.txt" }}</code>)
+    <input type="file" name="file" accept=".txt,text/plain">
+  </label>
+  <label>Ожидаемый вывод программы
+    <textarea name="expected_output" rows="4"
+              placeholder="например: 12345"></textarea>
+  </label>
+  <button type="submit">Добавить тест</button>
+</form>
+
+{% if tests %}
+<table class="tests" style="margin-top:12px;">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Файл для open()</th>
+      <th>Ожидаемый вывод</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for t in tests %}
+    <tr>
+      <td>{{ loop.index }}</td>
+      <td>
+        {% if t.file_content %}
+          <pre style="max-height:120px;overflow:auto;">{{ t.file_content }}</pre>
+        {% else %}
+          <span class="muted">(пустой файл)</span>
+        {% endif %}
+      </td>
+      <td><pre style="max-height:120px;overflow:auto;">{{ t.expected_output }}</pre></td>
+      <td>
+        <details>
+          <summary>редактировать</summary>
+          <form method="post"
+                action="/admin/tasks/{{ task.id }}/tests/{{ t.id }}/open/update"
+                enctype="multipart/form-data" style="margin-top:8px;">
+            {{ csrf_input(request) }}
+            <label>Новый файл (если не выбран — файл не меняется)
+              <input type="file" name="file" accept=".txt,text/plain">
+            </label>
+            <label>Ожидаемый вывод
+              <textarea name="expected_output" rows="3">{{ t.expected_output }}</textarea>
+            </label>
+            <button>Сохранить</button>
+          </form>
+          <form method="post"
+                action="/admin/tasks/{{ task.id }}/tests/{{ t.id }}/delete"
+                onsubmit="return confirm('Удалить тест {{ loop.index }}?')"
+                style="margin-top:8px;">
+            {{ csrf_input(request) }}
+            <button class="link">удалить тест</button>
+          </form>
+        </details>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+<form method="post" action="/admin/tasks/{{ task.id }}/tests/clear"
+      onsubmit="return confirm('Удалить ВСЕ тесты?')" style="margin-top:8px;">
+  {{ csrf_input(request) }}
+  <button style="background:#dc2626;border-color:#dc2626;">Очистить все тесты</button>
+</form>
+{% endif %}
+
+{% else %}
+<!-- =============== ТЕСТЫ (обычные) =============== -->
+<h2 id="tests">Тесты (input / output)</h2>
+
+<p class="muted">
+  Всего тестов: <b>{{ tests|length }}</b>.
+</p>
+
+<form method="post" action="/admin/tasks/{{ task.id }}/tests/upload"
+      enctype="multipart/form-data" class="card">
+  {{ csrf_input(request) }}
+  <label>Загрузить файл <code>tests/{{ task.external_number }}.json</code>
+    <input type="file" name="json_file" accept=".json,application/json">
+  </label>
+  <label>…или вставить JSON сюда
+    <textarea name="raw" rows="8"
+              placeholder='[{"input": "1 2 3", "output": "6"}, ...]'></textarea>
+  </label>
+  <label><input type="checkbox" name="append" value="1">
+    Добавить к существующим (не заменять)</label>
+  <button>Загрузить тесты</button>
+</form>
+
+{% if tests %}
+<table class="tests" style="margin-top:12px;">
+  <thead>
+    <tr><th>#</th><th>Вход</th><th>Ожидаемый вывод</th><th></th></tr>
+  </thead>
+  <tbody>
+  {% for t in tests %}
+    <tr>
+      <td>{{ loop.index }}</td>
+      <td><pre>{{ t.input }}</pre></td>
+      <td><pre>{{ t.expected_output }}</pre></td>
+      <td>
+        <form method="post"
+              action="/admin/tasks/{{ task.id }}/tests/{{ t.id }}/delete"
+              onsubmit="return confirm('Удалить тест {{ loop.index }}?')">
+          {{ csrf_input(request) }}
+          <button class="link">удалить</button>
+        </form>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+<form method="post" action="/admin/tasks/{{ task.id }}/tests/clear"
+      onsubmit="return confirm('Удалить ВСЕ тесты?')" style="margin-top:8px;">
+  {{ csrf_input(request) }}
+  <button style="background:#dc2626;border-color:#dc2626;">Очистить все тесты</button>
+</form>
+{% endif %}
+{% endif %}
+
+<hr style="margin:24px 0;">
+<form method="post" action="/admin/tasks/{{ task.id }}/delete"
+      onsubmit="return confirm('Удалить задачу {{ task.external_number }}?')">
+  {{ csrf_input(request) }}
+  <button style="background:#dc2626;border-color:#dc2626;">Удалить задачу</button>
+</form>
+
+<script>
+function addExampleRow() {
+  const wrap = document.getElementById('examples-list');
+  const row = document.createElement('div');
+  row.className = 'example-row';
+  row.style = 'display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-bottom:8px;';
+  row.innerHTML = `
+    <textarea name="ex_input" rows="3" placeholder="Ввод"></textarea>
+    <textarea name="ex_output" rows="3" placeholder="Вывод"></textarea>
+    <button type="button" class="link"
+            onclick="this.parentNode.remove();">✕</button>`;
+  wrap.appendChild(row);
+}
+</script>
+{% endif %}
+{% endblock %}

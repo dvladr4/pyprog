@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Задачи{% endblock %}
+{% block content %}
+<h1>Задачи</h1>
+
+<ul class="task-list">
+  {% for t in tasks %}
+    {% set p = progress[t.id] %}
+    <li>
+      {% if p.solved %}
+        <span class="mark mark-ok" title="Все тесты пройдены">✓</span>
+      {% elif p.has_solution %}
+        <span class="mark mark-fail" title="Пройдены не все тесты">✗</span>
+      {% else %}
+        <span class="mark mark-none" title="Решения ещё нет">○</span>
+      {% endif %}
+
+      <a href="/tasks/{{ t.id }}">{{ t.external_number }}. {{ t.title }}</a>
+
+      {% if p.has_solution %}
+        <span class="muted">
+          — есть решение ({{ p.tests_passed }}/{{ p.total_tests }} тестов пройдено)
+        </span>
+      {% endif %}
+    </li>
+  {% endfor %}
+</ul>
+{% endblock %}

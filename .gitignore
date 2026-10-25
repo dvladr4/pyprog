@@ -1,0 +1,63 @@
+# ================= Python =================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# ================= Виртуальное окружение =================
+.venv/
+venv/
+ENV/
+env/
+
+# ================= Данные и секреты =================
+# БД, тесты, всё, что должно жить на сервере в /data
+data/
+# Файлы окружения (в git только .env.example)
+.env
+.env.*
+!.env.example
+
+# ================= Тесты / кэш =================
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.tox/
+
+# ================= IDE =================
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ================= ОС =================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ================= Одноразовые скрипты установки =================
+installer.py
+apply_*.py
+fix_*.py
+777-*.py
+1-generate_tests.py
+2-tester.py
+3-report_generator.py
+
+# ================= Старые артефакты отчётов =================
+report_*.html
+report_11А.html
+
+# ================= Логи и временные файлы =================
+*.log
+*.tmp
+*.bak
+cookies.txt

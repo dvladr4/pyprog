@@ -1,0 +1,93 @@
+* { box-sizing: border-box; }
+body {
+  margin: 0; font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: #f5f7fa; color: #222; line-height: 1.5;
+}
+.topbar {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 24px; background: #1f2937; color: #fff;
+}
+.topbar a { color: #fff; text-decoration: none; margin-right: 12px; }
+.brand { font-weight: 600; letter-spacing: .3px; }
+.container { max-width: 980px; margin: 24px auto; padding: 0 16px; }
+.cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.card { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+.card label { display: block; margin-bottom: 12px; }
+.card input, .card select, .card textarea {
+  width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px;
+  font: inherit; background: #fff;
+}
+.code { width: 100%; font-family: ui-monospace, Consolas, monospace; }
+button {
+  padding: 8px 14px; border-radius: 6px; border: 1px solid #2563eb;
+  background: #2563eb; color: #fff; cursor: pointer; font: inherit;
+}
+button.link { background: transparent; color: #dc2626; border: none; padding: 0; }
+.inline { display: inline; }
+.muted { color: #6b7280; }
+.task-desc { white-space: pre-wrap; background: #fff; padding: 16px; border-radius: 8px; }
+.example { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 8px 0; }
+.example pre, .tests pre {
+  background: #0f172a; color: #e2e8f0; padding: 10px; border-radius: 6px;
+  overflow-x: auto; margin: 4px 0; font-size: 13px;
+}
+.tests { width: 100%; border-collapse: collapse; background: #fff; }
+.tests th, .tests td { border: 1px solid #e5e7eb; padding: 6px; vertical-align: top; }
+.tests tr.ok td { background: #f0fdf4; }
+.tests tr.fail td { background: #fef2f2; }
+/* textarea в примерах и импорте */
+.example-row textarea,
+.card textarea[name="raw"] {
+  width: 100%;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 13px;
+  padding: 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+}
+
+button.link {
+  background: transparent;
+  color: #dc2626;
+  border: none;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+a.button {
+  display: inline-block;
+  padding: 8px 14px;
+  border-radius: 6px;
+  background: #2563eb;
+  color: #fff;
+  text-decoration: none;
+  border: 1px solid #2563eb;
+  margin-right: 8px;
+}
+a.button:hover {
+  background: #1d4ed8;
+}
+
+
+/* ====== Список задач ученика: маркеры ✓ / ✗ / ○ ====== */
+.task-list {
+  list-style: none;
+  padding-left: 0;
+  margin: 16px 0;
+}
+.task-list li {
+  padding: 8px 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+.task-list li:last-child { border-bottom: none; }
+
+.mark {
+  display: inline-block;
+  width: 1.4em;
+  text-align: center;
+  font-weight: bold;
+  margin-right: 6px;
+}
+.mark-ok   { color: #16a34a !important; }
+.mark-fail { color: #dc2626 !important; }
+.mark-none { color: #9ca3af !important; }

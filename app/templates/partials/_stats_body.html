@@ -1,0 +1,127 @@
+{# Тело сводной статистики. Может работать:
+   - по всем ученикам (stats.students = [много])
+   - по одному ученику (stats.students = [один]) #}
+
+{% set show_students_col = stats.students | length > 1 %}
+
+<div class="summary-box">
+  <div class="summary-item">
+    <div class="value">{{ stats.summary.students }}</div>
+    <div class="label">Учеников</div>
+  </div>
+  <div class="summary-item">
+    <div class="value">{{ stats.summary.tasks }}</div>
+    <div class="label">Задач</div>
+  </div>
+  <div class="summary-item">
+    <div class="value">{{ "%.1f"|format(stats.summary.avg_solve_percent) }}%</div>
+    <div class="label">Средний % решения</div>
+  </div>
+  <div class="summary-item">
+    <div class="value">{{ "%.1f"|format(stats.summary.avg_success_percent) }}%</div>
+    <div class="label">Средняя успешность тестов</div>
+  </div>
+</div>
+
+{% if stats.students and stats.tasks %}
+<div class="matrix-wrap table-wrap">
+  <table class="matrix">
+    <thead>
+      <tr>
+        <th class="sticky-left">{% if show_students_col %}Ученик{% else %}Задача{% endif %}</th>
+        {% if show_students_col %}
+          {% for t in stats.tasks %}
+            <th title="{{ t.title }}">{{ t.external_number }}</th>
+          {% endfor %}
+        {% else %}
+          {% for t in stats.tasks %}
+            <th title="{{ t.title }}">{{ t.external_number }}. {{ t.title }}</th>
+          {% endfor %}
+        {% endif %}
+        <th class="sep">Решено</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in stats.students %}
+      <tr>
+        <td class="sticky-left">
+          {% if show_students_col %}
+            <a href="/admin/students/{{ s.id }}/report">{{ s.name }}</a>
+          {% else %}
+            {{ s.name }}
+          {% endif %}
+        </td>
+        {% for t in stats.tasks %}
+          {% set cell = stats.matrix[s.id][t.id] %}
+          {% if cell.submission_id is none %}
+            <td class="cell not-solved" title="Не решено">·</td>
+          {% elif cell.solved %}
+            <td class="cell solved" title="Решено ({{ cell.tests_passed }}/{{ cell.total_tests }})">✓</td>
+          {% else %}
+            <td class="cell partial" title="Пройдено {{ cell.tests_passed }}/{{ cell.total_tests }}">{{ cell.tests_passed }}/{{ cell.total_tests }}</td>
+          {% endif %}
+        {% endfor %}
+        {% set ss = stats.student_stats[s.id] %}
+        <td class="sep"><b>{{ ss.solved_count }}/{{ ss.total_tasks }}</b><br>
+            <small>{{ "%.0f"|format(ss.solved_percent) }}%</small></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr>
+        <td class="sticky-left"><b>Решили</b></td>
+        {% for t in stats.tasks %}
+          {% set ts = stats.task_stats[t.id] %}
+          <td><b>{{ ts.solved_count }}/{{ stats.students|length }}</b><br>
+              <small>{{ "%.0f"|format(ts.solved_percent) }}%</small></td>
+        {% endfor %}
+        <td class="sep"></td>
+      </tr>
+      <tr>
+        <td class="sticky-left"><b>Успешность тестов</b></td>
+        {% for t in stats.tasks %}
+          {% set ts = stats.task_stats[t.id] %}
+          <td><small>{{ "%.0f"|format(ts.success_percent) }}%</small></td>
+        {% endfor %}
+        <td class="sep"></td>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+{% else %}
+  <p class="muted">Нет учеников или задач — нечего показывать.</p>
+{% endif %}
+
+<h2>Прогресс по задачам</h2>
+<div class="table-wrap">
+<table class="stats-table">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Название</th>
+      <th>Решили</th>
+      <th>Успешность тестов</th>
+      <th>Прогресс</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for t in stats.tasks %}
+      {% set ts = stats.task_stats[t.id] %}
+      <tr>
+        <td>{{ t.external_number }}</td>
+        <td>{{ t.title }}</td>
+        <td>{{ ts.solved_count }}/{{ stats.students|length }}
+            ({{ "%.0f"|format(ts.solved_percent) }}%)</td>
+        <td>{{ "%.1f"|format(ts.success_percent) }}%</td>
+        <td>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: {{ ts.success_percent }}%">
+              {{ "%.1f"|format(ts.success_percent) }}%
+            </div>
+          </div>
+        </td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>

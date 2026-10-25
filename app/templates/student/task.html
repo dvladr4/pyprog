@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block title %}Задача {{ task.external_number }}{% endblock %}
+{% block head %}
+  <link rel="stylesheet" href="/static/css/report.css">
+{% endblock %}
+{% block content %}
+<h1>
+  {{ task.external_number }}. {{ task.title }}
+  {% if comments %}<span class="comment-badge" title="Есть комментарий учителя">💬</span>{% endif %}
+  <a class="back-link" href="/tasks">← к задачам</a>
+</h1>
+
+<div class="task-desc">{{ task.description }}</div>
+
+{% if task.examples %}
+  <h2>Примеры</h2>
+  {% for ex in task.examples %}
+    <div class="example">
+      <div><b>Ввод:</b><pre>{{ ex.input }}</pre></div>
+      <div><b>Вывод:</b><pre>{{ ex.output }}</pre></div>
+    </div>
+  {% endfor %}
+{% endif %}
+
+<h2>Отправить решение</h2>
+<form method="post" action="/tasks/{{ task.id }}/submit" enctype="multipart/form-data">
+  {{ csrf_input(request) }}
+  <textarea name="code" rows="18" class="code" placeholder="# ваш код на Python"></textarea>
+  <label>…или загрузите файл
+    <input type="file" name="file" accept=".py">
+  </label>
+  <button type="submit">Проверить</button>
+</form>
+
+{% if submission %}
+  <h2>Результат последней проверки</h2>
+  <p>
+    {% if progress.solved %}
+      <span class="mark mark-ok" style="font-size:1.2em;">✓</span>
+      Все тесты пройдены ({{ progress.tests_passed }}/{{ progress.total_tests }}).
+    {% else %}
+      <span class="mark mark-fail" style="font-size:1.2em;">✗</span>
+      Пройдено {{ progress.tests_passed }}/{{ progress.total_tests }} тестов.
+    {% endif %}
+    <a href="/submissions/{{ submission.id }}" class="back-link">Подробный отчёт</a>
+  </p>
+
+  {% if test_results %}
+  <div class="table-wrap">
+  <table class="task-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        {% for tr in test_results %}
+          <th>
+            {% if tr.passed %}
+              <span class="mark mark-ok">✓</span>
+            {% else %}
+              <span class="mark mark-fail">✗</span>
+            {% endif %}
+            {{ loop.index }}
+          </th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="task-header" onclick='showCondition({{ task.external_number }})'>Условие</td>
+        {% for tr in test_results %}
+          <td class="test-cell {{ 'passed' if tr.passed else 'failed' }}"
+              title="Тест {{ loop.index }}: {{ 'пройден' if tr.passed else 'не пройден' }}"
+              onclick='showTestDetails({{ task.external_number }}, {{ loop.index0 }})'></td>
+        {% endfor %}
+      </tr>
+    </tbody>
+  </table>
+  </div>
+  {% endif %}
+
+  {% if comments %}
+    <div class="comments-block">
+      <h4>Комментарии учителя ({{ comments|length }})</h4>
+      <ul class="comments-list">
+        {% for c in comments %}
+          <li>
+            <div class="comment-text">{{ c.text }}</div>
+            <div class="comment-meta">
+              {{ c.created_at.strftime("%d.%m.%Y %H:%M") if c.created_at else "" }}
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+{% else %}
+  <p class="muted">Решения ещё нет. Отправьте его выше — система проверит и покажет результат.</p>
+{% endif %}
+
+<!-- ============ МОДАЛКИ ============ -->
+<div id="testModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeTestModal()">&times;</span>
+    <div id="testModalContent"></div>
+  </div>
+</div>
+<div id="conditionModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeConditionModal()">&times;</span>
+    <div id="conditionModalContent"></div>
+  </div>
+</div>
+
+<script id="report-data" type="application/json">
+{
+  "csrfToken": {{ get_or_create_csrf_token(request) | tojson | safe }},
+  "isTeacher": false,
+  "tasksById": {
+    "{{ task.external_number }}": {
+      "title": {{ task.title | tojson | safe }},
+      "description": {{ (task.description or "") | tojson | safe }},
+      "examples": [
+        {% for ex in task.examples %}
+          {"input": {{ (ex.input or "") | tojson | safe }},
+           "output": {{ (ex.output or "") | tojson | safe }}}{{ "," if not loop.last }}
+        {% endfor %}
+      ]
+    }
+  },
+  "commentsByTask": {
+    "{{ task.external_number }}": [
+      {% for c in comments %}
+        {"text": {{ c.text | tojson | safe }},
+         "created_at": {{ (c.created_at.strftime("%d.%m.%Y %H:%M") if c.created_at else "") | tojson | safe }}}{{ "," if not loop.last }}
+      {% endfor %}
+    ]
+  },
+  "results": {
+    "{{ task.external_number }}": {
+      "code": {{ (submission.code if submission else "") | tojson | safe }},
+      "tests": [
+        {% for tr in test_results %}
+          {"order": {{ tr.order }},
+           "passed": {{ "true" if tr.passed else "false" }},
+           "input": {{ (tr.input or "") | tojson | safe }},
+           "expected_output": {{ (tr.expected_output or "") | tojson | safe }},
+           "actual_output": {{ (tr.actual_output or "") | tojson | safe }},
+           "error": {{ (tr.error or "") | tojson | safe }},
+           "execution_ms": {{ tr.execution_ms or 0 }}}{{ "," if not loop.last }}
+        {% endfor %}
+      ]
+    }
+  }
+}
+</script>
+<script src="/static/js/report.js"></script>
+{% endblock %}

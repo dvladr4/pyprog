@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% set wide_layout = true %}
+{% block title %}Сводная статистика{% endblock %}
+{% block head %}
+  <link rel="stylesheet" href="/static/css/stats.css">
+{% endblock %}
+{% block content %}
+<h1>
+  Сводная статистика
+  <a class="back-link" href="/admin">← в кабинет</a>
+  <a class="back-link" href="/admin/stats/export">Скачать HTML</a>
+</h1>
+
+{% include "partials/_stats_body.html" %}
+{% endblock %}

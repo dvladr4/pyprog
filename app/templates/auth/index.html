@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Вход</h1>
+<div class="cards">
+  <form class="card" method="post" action="/login/student">
+  {{ csrf_input(request) }}
+    <h2>Я ученик</h2>
+    <label>Выберите своё имя
+      <select name="name" required>
+        {% for s in students %}<option>{{ s.name }}</option>{% endfor %}
+      </select>
+    </label>
+    <button type="submit">Войти</button>
+  </form>
+  <div class="card">
+    <h2>Я учитель</h2>
+    <p><a href="/login/teacher">Войти по паролю</a></p>
+  </div>
+</div>
+{% endblock %}

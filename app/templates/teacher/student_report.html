@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+{% set wide_layout = true %}
+{% block title %}Результаты: {{ report.user.name }}{% endblock %}
+{% block head %}
+  <link rel="stylesheet" href="/static/css/report.css">
+{% endblock %}
+
+{% block content %}
+<h1>
+  Результаты тестирования: {{ report.user.name }}
+  {% if mode == "teacher" %}
+    <a class="back-link" href="/admin">← в кабинет</a>
+  {% else %}
+    <a class="back-link" href="/tasks">← к задачам</a>
+  {% endif %}
+</h1>
+
+<div class="summary-box">
+  <div class="summary-item">
+    <div class="value">{{ report.summary.solved }}/{{ report.summary.total_tasks }}</div>
+    <div class="label">Решено задач</div>
+  </div>
+  <div class="summary-item">
+    <div class="value">{{ "%.1f"|format(report.summary.solve_percent) }}%</div>
+    <div class="label">Процент решения</div>
+  </div>
+  <div class="summary-item">
+    <div class="value">{{ report.summary.tests_passed }}/{{ report.summary.tests_total }}</div>
+    <div class="label">Пройдено тестов</div>
+  </div>
+  <div class="summary-item">
+    <div class="value">{{ "%.1f"|format(report.summary.success_percent) }}%</div>
+    <div class="label">Успешность тестов</div>
+  </div>
+</div>
+
+<div class="tab">
+  <button class="tablinks active" onclick="openTab(event, 'Results')">Результаты</button>
+  <button class="tablinks" onclick="openTab(event, 'Statistics')">Статистика</button>
+  <button class="tablinks" onclick="openTab(event, 'Tasks')">Условия задач</button>
+</div>
+
+<!-- ============ РЕЗУЛЬТАТЫ ============ -->
+<div id="Results" class="tabcontent" style="display:block;">
+  <div class="student-section">
+    <div class="student-name">{{ report.user.name }}</div>
+
+    {% set max_tests = report.tasks | map(attribute='total_tests') | max %}
+    {% if max_tests and max_tests > 0 %}
+    <div class="table-wrap">
+    <table class="task-table">
+      <thead>
+        <tr>
+          <th>Задача</th>
+          {% for i in range(1, max_tests + 1) %}<th>{{ i }}</th>{% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in report.tasks %}
+        <tr>
+          {% set has_comment = namespace(v=false) %}
+{% if row.submission %}
+  {% for c in comments %}
+    {% if c.submission_id == row.submission.id %}
+      {% set has_comment.v = true %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
+<td class="task-header"
+    onclick='showCondition({{ row.task.external_number }})'
+    title="Показать условие">
+  {{ row.task.external_number }}. {{ row.task.title }}
+  {% if has_comment.v %}
+    <span class="comment-badge" title="Есть комментарий учителя">💬</span>
+  {% endif %}
+</td>
+          {% if not row.submission %}
+            {% for i in range(max_tests) %}
+              <td class="test-cell not-solved" title="Не решено"></td>
+            {% endfor %}
+          {% else %}
+            {% for i in range(max_tests) %}
+              {% if i < row.test_results|length %}
+                {% set tr = row.test_results[i] %}
+                <td class="test-cell {{ 'passed' if tr.passed else 'failed' }}"
+                    title="Тест {{ i+1 }}: {{ 'пройден' if tr.passed else 'не пройден' }}"
+                    onclick='showTestDetails({{ row.task.external_number }}, {{ i }}, {{ row.submission.id }})'>
+                </td>
+              {% else %}
+                <td></td>
+              {% endif %}
+            {% endfor %}
+          {% endif %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    {% else %}
+      <p class="muted">Ни у одной задачи ещё нет тестов.</p>
+    {% endif %}
+
+    {% if comments %}
+    <div class="comments-block">
+      <h4>Все комментарии учителя ({{ comments|length }})</h4>
+      <ul class="comments-list">
+        {% for c in comments %}
+          <li>
+            <div class="comment-text">{{ c.text }}</div>
+            <div class="comment-meta">
+              {{ c.created_at.strftime("%d.%m.%Y %H:%M") if c.created_at else "" }}
+              {% if mode == "teacher" %}
+                <form method="post" action="/admin/comments/{{ c.id }}/delete"
+                      class="inline" onsubmit="return confirm('Удалить комментарий?')">
+  {{ csrf_input(request) }}
+                  <button class="link">удалить</button>
+                </form>
+              {% endif %}
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ============ СТАТИСТИКА ============ -->
+<div id="Statistics" class="tabcontent">
+  {% include "partials/_stats_body.html" %}
+</div>
+
+<!-- ============ УСЛОВИЯ ============ -->
+<div id="Tasks" class="tabcontent">
+  <h2>Условия задач</h2>
+  {% for row in report.tasks %}
+  <div class="student-section">
+    <h3>Задача {{ row.task.external_number }}: {{ row.task.title }}</h3>
+    <p><strong>Описание:</strong> {{ row.task.description }}</p>
+    {% if row.task.examples %}
+      <h4>Примеры:</h4>
+      {% for ex in row.task.examples %}
+      <div style="margin-bottom:15px;">
+        <div style="display:flex;gap:10px;">
+          <div style="flex:1;">
+            <strong>Ввод:</strong>
+            <div class="preformatted test-input">{{ ex.input }}</div>
+          </div>
+          <div style="flex:1;">
+            <strong>Вывод:</strong>
+            <div class="preformatted expected-output">{{ ex.output }}</div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+
+<!-- ============ МОДАЛКИ ============ -->
+<div id="testModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeTestModal()">&times;</span>
+    <div id="testModalContent"></div>
+  </div>
+</div>
+
+<div id="conditionModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeConditionModal()">&times;</span>
+    <div id="conditionModalContent"></div>
+  </div>
+</div>
+
+<!-- ============ ДАННЫЕ ДЛЯ JS ============ -->
+<script id="report-data" type="application/json">
+{
+  "csrfToken": {{ get_or_create_csrf_token(request) | tojson | safe }},
+  "isTeacher": {{ "true" if mode == "teacher" else "false" }},
+  "tasksById": {
+    {% for row in report.tasks %}
+      "{{ row.task.external_number }}": {
+        "title": {{ row.task.title | tojson | safe }},
+        "description": {{ (row.task.description or "") | tojson | safe }},
+        "examples": [
+          {% for ex in row.task.examples %}
+            {"input": {{ (ex.input or "") | tojson | safe }}, "output": {{ (ex.output or "") | tojson | safe }}}{{ "," if not loop.last }}
+          {% endfor %}
+        ]
+      }{{ "," if not loop.last }}
+    {% endfor %}
+  },
+  "commentsByTask": {
+    {% for row in report.tasks %}
+      {% set sub_id = row.submission.id if row.submission else none %}
+      {% set items = [] %}
+      {% if sub_id %}
+        {% for c in comments %}
+          {% if c.submission_id == sub_id %}
+            {% set _ = items.append({
+              "text": c.text,
+              "created_at": (c.created_at.strftime("%d.%m.%Y %H:%M") if c.created_at else ""),
+            }) %}
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+      "{{ row.task.external_number }}": {{ items | tojson | safe }}{{ "," if not loop.last }}
+    {% endfor %}
+  },
+  "results": {
+    {% for row in report.tasks %}
+      "{{ row.task.external_number }}": {
+        "code": {{ (row.submission.code if row.submission else "") | tojson | safe }},
+        "tests": [
+          {% for tr in row.test_results %}
+            {
+              "order": {{ tr.order }},
+              "passed": {{ "true" if tr.passed else "false" }},
+              "input": {{ (tr.input or "") | tojson | safe }},
+              "expected_output": {{ (tr.expected_output or "") | tojson | safe }},
+              "actual_output": {{ (tr.actual_output or "") | tojson | safe }},
+              "error": {{ (tr.error or "") | tojson | safe }},
+              "execution_ms": {{ tr.execution_ms or 0 }}
+            }{{ "," if not loop.last }}
+          {% endfor %}
+        ]
+      }{{ "," if not loop.last }}
+    {% endfor %}
+  }
+}
+</script>
+
+<script src="/static/js/report.js"></script>
+{% endblock %}

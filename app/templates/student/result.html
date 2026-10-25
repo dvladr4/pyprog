@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Результат{% endblock %}
+{% block content %}
+<h1>Решение задачи {{ task.external_number }}. {{ task.title }}</h1>
+<p>Статус: <b>{{ sub.status }}</b>, вердикт: <b>{{ sub.verdict or "—" }}</b>,
+   пройдено {{ sub.tests_passed }}/{{ sub.total_tests }}</p>
+
+{% if sub.status != "done" %}
+<meta http-equiv="refresh" content="2">
+<p class="muted">Идёт проверка, страница обновится…</p>
+{% endif %}
+
+<table class="tests">
+  <thead><tr><th>#</th><th>Вход</th><th>Ожидалось</th><th>Получено</th><th>Результат</th></tr></thead>
+  <tbody>
+  {% for r in sub.results %}
+    <tr class="{{ 'ok' if r.passed else 'fail' }}">
+      <td>{{ loop.index }}</td>
+      <td><pre>{{ r.input }}</pre></td>
+      <td><pre>{{ r.expected_output }}</pre></td>
+      <td><pre>{{ r.actual_output }}{% if r.error %}\n--- stderr ---\n{{ r.error }}{% endif %}</pre></td>
+      <td>{% if r.passed %}✓{% else %}✗{% endif %}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+
+
+{% if comments %}
+<div class="comments-block">
+  <h4>Комментарии учителя</h4>
+  <ul class="comments-list">
+    {% for c in comments %}
+      <li><div class="comment-text">{{ c.text }}</div>
+          <div class="comment-meta">{{ c.created_at.strftime("%d.%m.%Y %H:%M") if c.created_at else "" }}</div></li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+

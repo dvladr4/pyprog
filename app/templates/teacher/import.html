@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Импорт usloviya.json{% endblock %}
+{% block content %}
+<h1>Импорт usloviya.json</h1>
+<p class="muted">
+  Скрипт автоматически чинит типовые поломки (лишняя <code>{</code> перед
+  <code>"22":</code>, лишняя <code>}</code> в конце). Существующие задачи
+  (по номеру) пропускаются, если не отмечен чекбокс «перезаписать».
+  Если указать папку <code>tests/</code>, тесты <code>{N}.json</code>
+  подхватятся автоматически.
+</p>
+
+{% if error %}
+  <p style="background:#fee;color:#900;padding:10px;border-radius:6px;">{{ error }}</p>
+{% endif %}
+
+<form method="post" action="/admin/import" enctype="multipart/form-data" class="card">
+  {{ csrf_input(request) }}
+  <label>Загрузить <code>usloviya.json</code>
+    <input type="file" name="json_file" accept=".json,application/json">
+  </label>
+  <label>…или вставить JSON сюда
+    <textarea name="raw" rows="10">{{ raw }}</textarea>
+  </label>
+  <label>Папка с тестами (опционально, например <code>tests</code>)
+    <input name="tests_dir" placeholder="tests">
+  </label>
+  <label><input type="checkbox" name="overwrite" value="1">
+    Перезаписать существующие задачи</label>
+  <button>Импортировать</button>
+</form>
+
+{% if result %}
+<hr style="margin:24px 0;">
+<h2>Результат импорта</h2>
+<ul>
+  <li>Создано задач: <b>{{ result.created|length }}</b>
+      {% if result.created %}({{ result.created|join(", ") }}){% endif %}</li>
+  <li>Пропущено (уже было): <b>{{ result.skipped|length }}</b>
+      {% if result.skipped %}({{ result.skipped|join(", ") }}){% endif %}</li>
+  <li>Загружено тестов: <b>{{ result.tests_loaded }}</b></li>
+  {% if result.errors %}
+    <li style="color:#900;">Ошибки: <b>{{ result.errors|length }}</b>
+      <ul>{% for e in result.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+    </li>
+  {% endif %}
+</ul>
+<p><a href="/admin">← Вернуться в кабинет</a></p>
+{% endif %}
+{% endblock %}

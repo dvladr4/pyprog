@@ -1,0 +1,152 @@
+/* Стили сводной статистики. */
+.back-link {
+  font-size: 14px;
+  font-weight: normal;
+  margin-left: 16px;
+  color: #2563eb;
+  text-decoration: none;
+}
+.back-link:hover { text-decoration: underline; }
+
+.summary-box {
+  display: flex;
+  gap: 16px;
+  margin: 16px 0;
+  flex-wrap: wrap;
+}
+.summary-item {
+  flex: 1 1 180px;
+  padding: 14px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #007bff;
+  text-align: center;
+}
+.summary-item .value {
+  font-size: 26px;
+  font-weight: bold;
+  color: #007bff;
+}
+.summary-item .label {
+  font-size: 13px;
+  color: #666;
+  margin-top: 4px;
+}
+
+.matrix-wrap {
+  overflow-x: auto;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  max-height: 70vh;
+}
+.matrix {
+  border-collapse: collapse;
+  min-width: 100%;
+}
+.matrix th, .matrix td {
+  border: 1px solid #e5e7eb;
+  padding: 6px 8px;
+  text-align: center;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.matrix th {
+  background: #f2f2f2;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+.matrix thead th { position: sticky; top: 0; }
+.matrix td.sticky-left,
+.matrix th.sticky-left {
+  position: sticky;
+  left: 0;
+  background: #fafafa;
+  z-index: 3;
+  text-align: left;
+  min-width: 180px;
+}
+.matrix thead th.sticky-left {
+  z-index: 4;
+  background: #ececec;
+}
+.matrix tfoot td {
+  background: #f7f7f7;
+  font-weight: bold;
+}
+.matrix .sep { border-left: 2px solid #cbd5e1; }
+
+.matrix .cell.solved     { background: #d4edda; color: #155724; font-weight: bold; }
+.matrix .cell.partial    { background: #fff3cd; color: #856404; font-size: 12px; }
+.matrix .cell.not-solved { color: #9ca3af; }
+
+.stats-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0 24px;
+  background: #fff;
+}
+.stats-table th, .stats-table td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: center;
+}
+.stats-table th { background: #007bff; color: #fff; }
+.stats-table tr:nth-child(even) { background: #f2f2f2; }
+.stats-table td:nth-child(2) { text-align: left; }
+
+.progress-bar {
+  width: 100%;
+  background: #e0e0e0;
+  border-radius: 5px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 20px;
+  background: #28a745;
+  text-align: center;
+  color: #fff;
+  line-height: 20px;
+  font-size: 12px;
+}
+
+
+/* ====== Широкий режим и обёртка таблицы (добавлено apply_wide_layout) ====== */
+.container.page-wide {
+  max-width: none;
+  padding: 0 16px;
+}
+
+.table-wrap {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* компактнее ячейки матрицы */
+.matrix th,
+.matrix td {
+  padding: 4px 6px;
+  font-size: 12px;
+}
+.matrix thead th {
+  font-size: 12px;
+  padding: 6px 4px;
+  min-width: 34px;
+}
+.matrix td.sticky-left,
+.matrix th.sticky-left {
+  min-width: 160px;
+  max-width: 220px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.matrix .cell.solved,
+.matrix .cell.partial,
+.matrix .cell.not-solved {
+  min-width: 34px;
+}

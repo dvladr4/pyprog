@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Тестирующая система{% endblock %}</title>
+  <link rel="stylesheet" href="/static/css/app.css">
+  {% block head %}{% endblock %}
+</head>
+<body>
+<header class="topbar">
+  <a href="/" class="brand">Задачи по программированию на Python</a>
+  <nav>
+    {% if request.session.get("role") == "teacher" %}
+      <a href="/admin">Кабинет</a>
+      <a href="/admin/stats">Статистика</a>
+      <form method="post" action="/logout" class="inline">
+  {{ csrf_input(request) }}<button>Выйти</button></form>
+    {% elif request.session.get("role") == "student" %}
+      <a href="/tasks">Задачи</a>
+      <a href="/me/report">Мой отчёт</a>
+      <span class="who">{{ request.session.get("name") }}</span>
+      <form method="post" action="/logout" class="inline">
+  {{ csrf_input(request) }}<button>Выйти</button></form>
+    {% endif %}
+  </nav>
+</header>
+<main class="container{% if wide_layout is defined and wide_layout %} page-wide{% endif %}">
+  {% block content %}{% endblock %}
+</main>
+</body>
+</html>

@@ -1,0 +1,41 @@
+{# Ожидает:
+   - comments: list[TeacherComment]
+   - submission_id: int
+   - mode: "teacher" | "student"
+   - csrf? — не требуется (пока не включён CSRF)
+#}
+{% if comments or mode == "teacher" %}
+<div class="comments-block">
+  <h4>Комментарии учителя</h4>
+  {% if comments %}
+    <ul class="comments-list">
+      {% for c in comments %}
+        <li>
+          <div class="comment-text">{{ c.text }}</div>
+          <div class="comment-meta">
+            {{ c.created_at.strftime("%d.%m.%Y %H:%M") if c.created_at else "" }}
+            {% if mode == "teacher" %}
+              <form method="post" action="/admin/comments/{{ c.id }}/delete"
+                    class="inline" onsubmit="return confirm('Удалить комментарий?')">
+  {{ csrf_input(request) }}
+                <button class="link">удалить</button>
+              </form>
+            {% endif %}
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">Комментариев пока нет.</p>
+  {% endif %}
+
+  {% if mode == "teacher" %}
+    <form method="post" action="/admin/comments" class="comment-form">
+  {{ csrf_input(request) }}
+      <input type="hidden" name="submission_id" value="{{ submission_id }}">
+      <textarea name="text" rows="3" placeholder="Комментарий к решению…" required></textarea>
+      <button type="submit">Сохранить</button>
+    </form>
+  {% endif %}
+</div>
+{% endif %}

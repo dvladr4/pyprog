@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Кабинет учителя{% endblock %}
+{% block content %}
+<h1>Кабинет учителя</h1>
+
+<p>
+  <a href="/admin/import" class="button">Импорт usloviya.json</a>
+  <a href="/admin/tasks/new" class="button">+ Новая задача</a>
+  <a href="/admin/stats" class="button">Сводная статистика</a>
+</p>
+
+<section>
+  <h2>Задачи</h2>
+  {% if tasks %}
+  <ul>
+  {% for t in tasks %}
+    <li>
+      {{ t.external_number }}. {{ t.title }}
+      — <a href="/admin/tasks/{{ t.id }}/edit">редактировать</a>
+      <span class="muted">
+        (тестов: {{ t.tests|length }}, примеров: {{ t.examples|length }})
+      </span>
+    </li>
+  {% endfor %}
+  </ul>
+  {% else %}
+  <p class="muted">
+    Задач пока нет. Импортируйте <code>usloviya.json</code>
+    или создайте вручную.
+  </p>
+  {% endif %}
+</section>
+
+<hr style="margin:24px 0;">
+
+<section>
+  <h2>Ученики</h2>
+  {% if students %}
+  <ul>
+  {% for s in students %}
+    <li>
+      {{ s.name }}
+      <a href="/admin/students/{{ s.id }}/report" class="button"
+         style="padding:4px 10px;font-size:13px;margin-left:8px;">отчёт</a>
+      <form method="post" action="/admin/students/{{ s.id }}/delete" class="inline">
+  {{ csrf_input(request) }}
+        <button class="link">удалить</button>
+      </form>
+    </li>
+  {% endfor %}
+  </ul>
+  {% else %}
+  <p class="muted">Учеников пока нет. Добавьте первого ниже.</p>
+  {% endif %}
+
+  <form method="post" action="/admin/students" style="margin-top:12px;">
+  {{ csrf_input(request) }}
+    <input name="name" placeholder="Имя ученика" required>
+    <button>Добавить</button>
+  </form>
+</section>
+{% endblock %}
